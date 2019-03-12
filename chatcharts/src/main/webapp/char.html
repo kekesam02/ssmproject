@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+	<script src="js/echarts.common.min.js"></script>
+</head>
+<body>
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div id="main" style="width: 100%;height:400px;"></div>
+<script type="text/javascript">
+    // 基于准备好的dom，初始化echarts实例
+    var myChart = null;
+
+
+    var date = new Date();
+
+
+	function formate(min){
+        if(min<10)min = "0"+min;
+        return min;
+	}
+
+	function display(titledata,datas){
+
+        myChart = echarts.init(document.getElementById('main'));
+        // 指定图表的配置项和数据
+        var option ={
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: titledata
+            },
+
+            yAxis: {
+                type: 'value'
+            },
+
+            series: [{
+                data: datas,
+                type: 'line',
+                areaStyle: {}
+            }]
+        };
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+	}
+
+    function getData(){
+        var datas = [];
+        for(var i=0;i<=59;i++){
+            datas.push(Math.random()*1000);
+        }
+        return datas;
+    }
+
+    function getTitleData(){
+        var seconds = [];
+        for(var i=0;i<=59;i++){
+            var dstr =formate(date.getHours())+":"+formate(date.getMinutes())+":"+formate(i);
+            seconds.push(dstr);
+        }
+        return seconds;
+	}
+
+    display(getTitleData(),getData());
+
+
+    function getDataObj(){
+        var dataobj = {};
+        var date = new Date();
+        for(var i=0;i<=59;i++){
+            var dstr =formate(date.getHours())+":"+formate(date.getMinutes())+":"+formate(i);
+            dataobj[dstr] = 0;
+        }
+        return dataobj;
+    }
+
+
+
+    //创建对象
+    var Chat = new Object();
+
+    Chat.socket = null;
+    // 判断浏览器是否支持WebSocket,如果支持，则创建WebSocket连接
+    Chat.connect = function(host) {
+        if ('WebSocket' in window) {
+            Chat.socket = new WebSocket(host);
+        } else {
+            Console.log('Error: WebSocket is not supported by this browser.');
+            return;
+        }
+        // 连接成功后触发onopen事件
+        Chat.socket.onopen = function () {
+            Console.log('Info: WebSocket connection opened.');
+            //用户按下一个键盘按键时会触发 onkeydown 事件
+            document.getElementById('chat').onkeydown= function(event) {
+                //数字13表示回车键
+                if (event.keyCode == 13) {
+                    //调用这个函数
+                    Chat.sendMessage();
+                }
+            };
+        };
+        // 连接关闭时触发onclose事件
+        Chat.socket.onclose = function () {
+            document.getElementById('chat').onkeydown = null;
+            Console.log('Info: WebSocket closed.');
+        };
+        // 收到信息后触发onmessage事件
+        Chat.socket.onmessage = function (message) {
+            //调用这个函数，将接收的信息进行处理
+            Console.log(message.data);
+        };
+    };
+    //判断是http还是https，调用Chat.connect(host)函数
+    Chat.initialize = function() {
+        if (window.location.protocol == 'http:') {
+            Chat.connect('ws://127.0.0.1:8080/chat');
+        } else {
+            Chat.connect('wss://' + window.location.host + ':8080/chat');
+        }
+    };
+
+
+
+
+    //创建对象
+    var Console = new Object();
+    var dateobjproxy =  getDataObj();
+    Console.log = function(message) {
+        var date = new Date();
+        var dstr =formate(date.getHours())+":"+formate(date.getMinutes())+":"+formate(date.getSeconds());
+        dateobjproxy[dstr] = dateobjproxy[dstr]*1 + 1;
+        showChar(dateobjproxy);
+    };
+
+    function showChar(obj){
+        var titleData = [];
+        var data = [];
+        for(var key in obj){
+            titleData.push(key);
+            data.push(obj[key]);
+		}
+        display(titleData,data);
+	}
+    //程序运行，会先调用这个函数，进行初始化。
+    Chat.initialize();
+</script>
+
+<div id="console-container">
+	<div id="console" ></div>
+</div>
+</body>
+</html>
